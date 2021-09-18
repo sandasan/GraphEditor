@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.Group?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+
+<Group xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.san4os2008.grapheditor.HelloController">
+   <children>
+      <VBox alignment="CENTER">
+          <Label fx:id="debugText" />
+         <HBox alignment="CENTER" spacing="5.0">
+            <children>
+                  <Button fx:id="buttonAddVertex" alignment="CENTER" minWidth="16.0" mnemonicParsing="false" onAction="#onButtonAddVertexClick" text="Add Vertex" />
+                  <Button fx:id="buttonAddEdge" alignment="CENTER" disable="true" minWidth="16.0" mnemonicParsing="false" onAction="#onButtonAddEdgeClick" text="Add Edge" />
+                  <Button fx:id="buttonDeleteVertex" alignment="CENTER" disable="true" minWidth="16.0" mnemonicParsing="false" onAction="#onButtonDeleteVertexClick" text="Delete Vertex" />
+                  <Button fx:id="buttonDeleteEdge" alignment="CENTER" disable="true" minWidth="16.0" mnemonicParsing="false" onAction="#onButtonDeleteEdgeClick" text="Delete Edge" />
+                  <Button fx:id="buttonSaveGraph" alignment="CENTER" minWidth="16.0" mnemonicParsing="false" onAction="#onButtonSaveGraphClick" text="Save" />
+                  <Button fx:id="buttonLoadGraph" alignment="CENTER" minWidth="16.0" mnemonicParsing="false" onAction="#onButtonLoadGraphClick" text="Load" />
+            </children>
+         </HBox>
+      
+          <Label fx:id="welcomeText" alignment="CENTER" contentDisplay="CENTER" text="Choose mode" />
+          <Pane fx:id="pane" onMouseClicked="#onPanelMouseClick" onMouseMoved="#onMouseMoved" prefHeight="170.0" prefWidth="416.0" style="-fx-background-color: MintCream;" />
+      </VBox>
+   </children>
+</Group>
