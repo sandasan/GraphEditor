@@ -26,6 +26,7 @@ class EdgesManager {
 
     public void addEdge(Edge edge) {
         edge.setIndex(lastEdgeIndex);
+        lastEdgeIndex++;
         edges.add(edge);
     }
 
