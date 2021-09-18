@@ -41,6 +41,18 @@ class VerticesManager {
         return vertex;
     }
 
+    public Vertex getVertexByCoordinates(double vertexX, double vertexY) {
+        Vertex vertex = new Vertex();
+        for (Vertex currentVertex :
+                vertices) {
+            if (currentVertex.getX() == vertexX && currentVertex.getY() == vertexY) {
+                vertex = currentVertex;
+                break;
+            }
+        }
+        return vertex;
+    }
+
     public void deleteVertex(double vertexX, double vertexY) {
         for (Vertex vertex : vertices) {
             if (vertex.getX() == vertexX && vertex.getY() == vertexY) {

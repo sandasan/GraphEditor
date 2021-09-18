@@ -16,14 +16,16 @@ import com.google.gson.Gson;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class HelloController {
     private String welcomeLabelText;
     private String debugLabelText;
     private VerticesManager verticesManager;
-    private EdgesManager edgesManager;
+//    private EdgesManager edgesManager;
     private ArrayList<VertexView> circles;
     private ArrayList<EdgeView> lines;
+//    private List<EdgeView> lines;
     private Group group;
     private Stage stage;
     private Vertex nearestStartVertex, nearestEndVertex;
@@ -53,7 +55,7 @@ public class HelloController {
         super();
         welcomeLabelText = "";
         verticesManager = new VerticesManager();
-        edgesManager = new EdgesManager();
+//        edgesManager = new EdgesManager();
         group = new Group();
         circles = new ArrayList<>();
         lines = new ArrayList<>();
@@ -160,13 +162,17 @@ public class HelloController {
                     line.toBack();
                     pane.getChildren().setAll(group);
                     isStartClick = true;
-                    Edge edge = new Edge();
+                    /*Edge edge = new Edge();
                     edge.setStartX(lineStartX);
                     edge.setStartY(lineStartY);
                     edge.setEndX(lineEndX);
-                    edge.setEndY(lineEndY);
-                    edgesManager.addEdge(edge);
+                    edge.setEndY(lineEndY);*/
+                    /*edgesManager.addEdge(edge);
                     if (edgesManager.getEdgesCount() > 0) {
+                        buttonDeleteEdge.setDisable(false);
+                    }*/
+                    // Отфильтровываем только вершины, у которых есть соседи, и считаем их количество
+                    if (verticesManager.getVertices().stream().filter(vertex1 -> !vertex1.getNeighboringVertices().isEmpty()).count() > 0) {
                         buttonDeleteEdge.setDisable(false);
                     }
                 }
@@ -175,7 +181,7 @@ public class HelloController {
                 for (int i = 0; i < circles.size(); i++) {
                     if (circles.get(i).isHover()) {
 //                        debugText.setText(String.valueOf(i));
-                        edgesManager.deleteEdgesOfVertex(circles.get(i).getCenterX(), circles.get(i).getCenterY());
+//                        edgesManager.deleteEdgesOfVertex(circles.get(i).getCenterX(), circles.get(i).getCenterY());
 //                        Number n = 0;  Class<? extends Number> c = n.getClass();
                         // Выбираем из группы кругов и линий линии
                         ArrayList<Line> lines = new ArrayList<>();
@@ -216,7 +222,8 @@ public class HelloController {
                         if (verticesManager.getVerticesCount() < 2) {
                             buttonAddEdge.setDisable(true);
                         }
-                        if (edgesManager.getEdgesCount() == 0) {
+                        // Отфильтровываем только вершины, у которых есть соседи, и считаем их количество
+                        if (verticesManager.getVertices().stream().filter(vertex1 -> !vertex1.getNeighboringVertices().isEmpty()).count() == 0) {
                             buttonDeleteEdge.setDisable(true);
                         }
                         break;
@@ -227,11 +234,18 @@ public class HelloController {
                 for (int i = 0; i < lines.size(); i++) {
                     EdgeView line = lines.get(i);
                     if (line.isHover()) {
-                        debugText.setText("Oho!");
-                        edgesManager.deleteEdge(edgesManager.getEdgeByCoordinates(line.getStartX(), line.getStartY(), line.getEndX(), line.getEndY()));
+                        debugText.setText("Oho! " + i);
+//                        edgesManager.deleteEdge(edgesManager.getEdgeByCoordinates(line.getStartX(), line.getStartY(), line.getEndX(), line.getEndY()));
+                        Vertex vertex1 = verticesManager.getVertexByCoordinates(line.getStartX(), line.getStartY());
+                        Vertex vertex2 = verticesManager.getVertexByCoordinates(line.getEndX(), line.getEndY());
+                        vertex1.deleteNeighboringVertex(vertex2);
+                        vertex2.deleteNeighboringVertex(vertex1);
                         group.getChildren().remove(line);
                         lines.remove(i);
-                        if (edgesManager.getEdgesCount() == 0) {
+//                        pane.getChildren().setAll(group);
+                        // Отфильтровываем только вершины, у которых есть соседи, и считаем их количество
+                        long verticesWithNaighboursCount = verticesManager.getVertices().stream().filter(vertex3 -> !vertex3.getNeighboringVertices().isEmpty()).count();
+                        if (verticesWithNaighboursCount == 0) {
                             buttonDeleteEdge.setDisable(true);
                         }
                         break;
@@ -291,19 +305,43 @@ public class HelloController {
                     lineStartY = vertex.getY();
                     lineEndX = currentVertex.getX();
                     lineEndY = currentVertex.getY();
-                    if (!edgesManager.isPresent(lineStartX, lineStartY, lineEndX, lineEndY)) {
-                        Edge edge = new Edge();
-                        edge.setStartX(lineStartX);
-                        edge.setStartY(lineStartY);
-                        edge.setEndX(lineEndX);
-                        edge.setEndY(lineEndY);
-                        edgesManager.addEdge(edge);
-                        Line line = new Line(lineStartX, lineStartY, lineEndX, lineEndY);
+//                    if (!edgesManager.isPresent(lineStartX, lineStartY, lineEndX, lineEndY)) {
+//                        Edge edge = new Edge();
+//                        edge.setStartX(lineStartX);
+//                        edge.setStartY(lineStartY);
+//                        edge.setEndX(lineEndX);
+//                        edge.setEndY(lineEndY);
+//                        edgesManager.addEdge(edge);
+//                    }
+                    // ***
+                    EdgeView line = new EdgeView(lineStartX, lineStartY, lineEndX, lineEndY);
+                    if (lines.stream().filter(line1 -> line1.getStartX() == lineEndX &&
+                            line1.getStartY() == lineEndY &&
+                            line1.getEndX() == lineStartX &&
+                            line1.getEndY() == lineStartY
+                    ).count() == 0) {
+                        lines.add(line);
                         line.strokeWidthProperty().set(5); // TODO: Вынести в параметры
                         line.setStroke(Color.RED); // TODO: Вынести в параметры
                         group.getChildren().addAll(line);
                         line.toBack();
-                        pane.getChildren().setAll(group);
+                    }
+                    /*if (lines.stream().filter(line1 -> line1.getStartX() == lineStartX &&
+                            line1.getStartY() == lineStartY &&
+                            line1.getEndX() == lineEndX &&
+                            line1.getEndY() == lineEndY
+                    ).count() == 0) {
+                        lines.add(line);
+                        line.strokeWidthProperty().set(5); // TODO: Вынести в параметры
+                        line.setStroke(Color.RED); // TODO: Вынести в параметры
+                        group.getChildren().addAll(line);
+                        line.toBack();
+                    }*/
+                    // pane.getChildren().setAll(group);
+                    // ***
+                    // Отфильтровываем только вершины, у которых есть соседи, и считаем их количество
+                    if (verticesManager.getVertices().stream().filter(vertex1 -> !vertex1.getNeighboringVertices().isEmpty()).count() > 0) {
+                        buttonDeleteEdge.setDisable(false);
                     }
                 }
             }
