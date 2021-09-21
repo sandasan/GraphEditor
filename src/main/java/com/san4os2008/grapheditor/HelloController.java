@@ -1,5 +1,6 @@
 package com.san4os2008.grapheditor;
 
+import javafx.animation.PauseTransition;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
@@ -10,9 +11,11 @@ import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.stage.Stage;
 import com.google.gson.Gson;
+import javafx.util.Duration;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -116,8 +119,21 @@ public class HelloController {
                 VertexView circle = new VertexView();
                 circle.setCenterX(event.getX());
                 circle.setCenterY(event.getY());
+                circle.setActive(true);
                 circle.setRadius(10); // TODO: Вынести в параметры
-                circle.setFill(Color.RED); // TODO: Вынести в параметры
+                circle.setFill(Color.DARKGREEN); // TODO: Вынести в параметры
+                for (VertexView currentCircle :
+                        circles) {
+                    currentCircle.setActive(false);
+                    // Раскрашиваем кружочки: последний добавленный (активный) в один цвет, а все остальные - в другой
+                    if (currentCircle.isActive()) {
+                        currentCircle.setFill(Color.DARKGREEN); // TODO: Вынести в параметры
+                    } else {
+                        PauseTransition pauseTransition = new PauseTransition(Duration.millis(1));
+                        pauseTransition.setOnFinished(event1 -> currentCircle.setFill(Color.RED)); // TODO: Вынести в параметры
+                        pauseTransition.play();
+                    }
+                }
                 circles.add(circle);
                 group.getChildren().addAll(circle);
                 circle.circleIndexInGroup = group.getChildren().size() - 1;
@@ -142,6 +158,29 @@ public class HelloController {
                     debugLabelText = "x: " + lineStartX + ", y: " + lineStartY;
                     debugText.setText(debugLabelText);
                     isStartClick = false;
+                    // Выбираем из группы кругов и линий круг, в окрестности которого щёлкнул мышкой пользователь, и делаем его активным и окрашиваем в соотв. цвет
+                    ArrayList<Circle> circles = new ArrayList<>();
+                    for (Node node :
+                            group.getChildren()) {
+                        try {
+                            VertexView currentCircle = (VertexView) node;
+                            circles.add(currentCircle);
+                            if (node.getClass().isInstance(currentCircle)) {
+                                if (currentCircle.getCenterX() == lineStartX &&
+                                    currentCircle.getCenterY() == lineStartY) {
+                                    currentCircle.setActive(true);
+                                    currentCircle.setFill(Color.DARKGREEN); // TODO: Вынести в параметры
+                                } else {
+                                    currentCircle.setActive(false);
+                                    PauseTransition pauseTransition = new PauseTransition(Duration.millis(1));
+                                    pauseTransition.setOnFinished(event1 -> currentCircle.setFill(Color.RED)); // TODO: Вынести в параметры
+                                    pauseTransition.play();
+                                }
+                            }
+                        } catch (ClassCastException e) {
+                            continue;
+                        }
+                    }
                 } else {
                     // TODO: отключить подсветку выбранной вершины
                     nearestEndVertex = getNearestVertex(event.getX(), event.getY(), verticesManager.getVertices());
@@ -162,27 +201,12 @@ public class HelloController {
                     line.toBack();
                     pane.getChildren().setAll(group);
                     isStartClick = true;
-                    /*Edge edge = new Edge();
-                    edge.setStartX(lineStartX);
-                    edge.setStartY(lineStartY);
-                    edge.setEndX(lineEndX);
-                    edge.setEndY(lineEndY);*/
-                    /*edgesManager.addEdge(edge);
-                    if (edgesManager.getEdgesCount() > 0) {
-                        buttonDeleteEdge.setDisable(false);
-                    }*/
-                    // Отфильтровываем только вершины, у которых есть соседи, и считаем их количество
-                    if (verticesManager.getVertices().stream().filter(vertex1 -> !vertex1.getNeighboringVertices().isEmpty()).count() > 0) {
-                        buttonDeleteEdge.setDisable(false);
-                    }
+                    setButtonDeleteEdgeAvailability();
                 }
                 break;
             case "Delete Vertex":
                 for (int i = 0; i < circles.size(); i++) {
                     if (circles.get(i).isHover()) {
-//                        debugText.setText(String.valueOf(i));
-//                        edgesManager.deleteEdgesOfVertex(circles.get(i).getCenterX(), circles.get(i).getCenterY());
-//                        Number n = 0;  Class<? extends Number> c = n.getClass();
                         // Выбираем из группы кругов и линий линии
                         ArrayList<Line> lines = new ArrayList<>();
                         for (Node node :
@@ -212,7 +236,6 @@ public class HelloController {
                             }
                         }
                         verticesManager.deleteVertex(circles.get(i).getCenterX(), circles.get(i).getCenterY());
-//                        group.getChildren().remove(circles.get(i).circleIndexInGroup);
                         group.getChildren().remove(circles.get(i));
                         circles.remove(i);
                         if (verticesManager.getVerticesCount() < 1) {
@@ -222,10 +245,7 @@ public class HelloController {
                         if (verticesManager.getVerticesCount() < 2) {
                             buttonAddEdge.setDisable(true);
                         }
-                        // Отфильтровываем только вершины, у которых есть соседи, и считаем их количество
-                        if (verticesManager.getVertices().stream().filter(vertex1 -> !vertex1.getNeighboringVertices().isEmpty()).count() == 0) {
-                            buttonDeleteEdge.setDisable(true);
-                        }
+                        setButtonDeleteEdgeAvailability();
                         break;
                     }
                 }
@@ -235,19 +255,13 @@ public class HelloController {
                     EdgeView line = lines.get(i);
                     if (line.isHover()) {
                         debugText.setText("Oho! " + i);
-//                        edgesManager.deleteEdge(edgesManager.getEdgeByCoordinates(line.getStartX(), line.getStartY(), line.getEndX(), line.getEndY()));
                         Vertex vertex1 = verticesManager.getVertexByCoordinates(line.getStartX(), line.getStartY());
                         Vertex vertex2 = verticesManager.getVertexByCoordinates(line.getEndX(), line.getEndY());
                         vertex1.deleteNeighboringVertex(vertex2);
                         vertex2.deleteNeighboringVertex(vertex1);
                         group.getChildren().remove(line);
                         lines.remove(i);
-//                        pane.getChildren().setAll(group);
-                        // Отфильтровываем только вершины, у которых есть соседи, и считаем их количество
-                        long verticesWithNaighboursCount = verticesManager.getVertices().stream().filter(vertex3 -> !vertex3.getNeighboringVertices().isEmpty()).count();
-                        if (verticesWithNaighboursCount == 0) {
-                            buttonDeleteEdge.setDisable(true);
-                        }
+                        setButtonDeleteEdgeAvailability();
                         break;
                     }
                 }
@@ -255,6 +269,12 @@ public class HelloController {
             default:
                 break;
         }
+    }
+
+    protected void setButtonDeleteEdgeAvailability() {
+        // Отфильтровываем только вершины, у которых есть соседи, и считаем их количество
+        long verticesWithNaighboursCount = verticesManager.getVertices().stream().filter(vertex -> !vertex.getNeighboringVertices().isEmpty()).count();
+        buttonDeleteEdge.setDisable(verticesWithNaighboursCount == 0);
     }
 
     @FXML
@@ -276,8 +296,14 @@ public class HelloController {
 
     @FXML
     protected void onButtonLoadGraphClick() {
+        // TODO: Добавить предупреждение о потере информаци без сохранения и очистку панели перед появлением графа из файла
         debugLabelText = "onButtonLoadGraphClick";
         debugText.setText(debugLabelText);
+        // Удаляем текущие вершины из памяти
+        verticesManager.getVertices().clear();
+        // Удаляем графические элементы с панели
+        group.getChildren().clear();
+        pane.getChildren().setAll(group);
         try {
             // TODO: Предоставить пользователю выбирать место и имя файла для открытия
             FileInputStream file = new FileInputStream("GraphEditor.saved");
@@ -305,15 +331,6 @@ public class HelloController {
                     lineStartY = vertex.getY();
                     lineEndX = currentVertex.getX();
                     lineEndY = currentVertex.getY();
-//                    if (!edgesManager.isPresent(lineStartX, lineStartY, lineEndX, lineEndY)) {
-//                        Edge edge = new Edge();
-//                        edge.setStartX(lineStartX);
-//                        edge.setStartY(lineStartY);
-//                        edge.setEndX(lineEndX);
-//                        edge.setEndY(lineEndY);
-//                        edgesManager.addEdge(edge);
-//                    }
-                    // ***
                     EdgeView line = new EdgeView(lineStartX, lineStartY, lineEndX, lineEndY);
                     if (lines.stream().filter(line1 -> line1.getStartX() == lineEndX &&
                             line1.getStartY() == lineEndY &&
@@ -326,21 +343,9 @@ public class HelloController {
                         group.getChildren().addAll(line);
                         line.toBack();
                     }
-                    /*if (lines.stream().filter(line1 -> line1.getStartX() == lineStartX &&
-                            line1.getStartY() == lineStartY &&
-                            line1.getEndX() == lineEndX &&
-                            line1.getEndY() == lineEndY
-                    ).count() == 0) {
-                        lines.add(line);
-                        line.strokeWidthProperty().set(5); // TODO: Вынести в параметры
-                        line.setStroke(Color.RED); // TODO: Вынести в параметры
-                        group.getChildren().addAll(line);
-                        line.toBack();
-                    }*/
-                    // pane.getChildren().setAll(group);
-                    // ***
                     // Отфильтровываем только вершины, у которых есть соседи, и считаем их количество
-                    if (verticesManager.getVertices().stream().filter(vertex1 -> !vertex1.getNeighboringVertices().isEmpty()).count() > 0) {
+                    long verticesWithNaighboursCount = verticesManager.getVertices().stream().filter(vertex1 -> !vertex1.getNeighboringVertices().isEmpty()).count();
+                    if (verticesWithNaighboursCount > 0) {
                         buttonDeleteEdge.setDisable(false);
                     }
                 }
@@ -383,6 +388,8 @@ public class HelloController {
 * TODO: Реализовать перетаскивание вершин графа, при этом чтобы вместе с вершиной перетаскивались и её ребра. Перетаскивать система должна разрешать только до сближения с другими элементами графа (может, реализовать их "толкание" при сдвигании перетаскиваемых элементов дальше).
 * TODO: Реализовать перетаскивание рёбер графа с их вершинами, с учётом правил размещения этих элементов относительно других из предыдущего пункта.
 * TODO: Добавить возможность изменять параметры внешнего вида элементов графа; цвет фона панели для рисования.
+* TODO: Возможность выделять группуу объектов и удалять их за раз.
+* TODO: В режиме удаления вершины все вершины сделать неактивными (и их отображения окрасить цветом неактивных вершин).
 * */
 
 /*

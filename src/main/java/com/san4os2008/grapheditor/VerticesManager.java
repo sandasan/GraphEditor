@@ -6,13 +6,11 @@ class VerticesManager {
 //    Vertex activeNode;
     private ArrayList<Vertex> vertices;
     private int lastVertexIndex;
-//    Display display;
 
     public VerticesManager() {
         super();
         vertices = new ArrayList<>();
         lastVertexIndex = 0;
-//        display = new Display();
     }
 
     /*public void onClickOnNode(Vertex node) {
@@ -26,6 +24,11 @@ class VerticesManager {
     public void addVertex(Vertex vertex) {
         vertex.setIndex(lastVertexIndex);
         lastVertexIndex++;
+        vertex.setActive(true);
+        for (Vertex currentVertex :
+                vertices) {
+            currentVertex.setActive(false);
+        }
         vertices.add(vertex);
     }
 

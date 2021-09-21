@@ -7,7 +7,7 @@ public class Vertex implements Serializable {
     private double x;
     private double y;
     private int index;
-//    private boolean isActive;
+    private boolean isActive;
     private ArrayList<Vertex> neighboringVertices;
     private ArrayList<Integer> neighboringVerticesIndexes;
 
@@ -15,6 +15,14 @@ public class Vertex implements Serializable {
         super();
         neighboringVertices = new ArrayList<>();
         neighboringVerticesIndexes = new ArrayList<>();
+    }
+
+    public void setActive(boolean active) {
+        isActive = active;
+    }
+
+    public boolean isActive() {
+        return isActive;
     }
 
     public double getX() {
